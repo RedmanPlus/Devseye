@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Count
 from vacancies.models import *
 from .serializers import *
 from .utils import NestedObjectManager, clean_nested_queryset, validate_get_params
@@ -15,6 +15,14 @@ class VacanciesPagination(PageNumberPagination):
         response = super().get_paginated_response(data)
         response.data['page_count'] = self.page.paginator.num_pages
         return response
+
+class TechnologyPagination(PageNumberPagination):
+    page_size = 10
+    def get_paginated_response(self, data):
+        response = super().get_paginated_response(data)
+        response.data['page_count'] = self.page.paginator.num_pages
+        return response
+    
 
 
 class VacanciesViewSet(viewsets.ModelViewSet):
@@ -141,9 +149,10 @@ class VacanciesViewSet(viewsets.ModelViewSet):
 
 class TechnologyViewSet(viewsets.ModelViewSet):
     serializer_class = TechnologySerializer
-
+    pagination_class = TechnologyPagination
+    
     def get_queryset(self):
-        queryset = Technology.objects.all()
+        queryset = Technology.objects.annotate(frequency=Count('technologies_required')).order_by('-frequency')
         return queryset
 
 
