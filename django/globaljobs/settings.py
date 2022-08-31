@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['https://devseye.ru']
+#CSRF_TRUSTED_ORIGINS = ['https://devseye.ru', 'http://devseye.ru', 'http://django']
 
 CORS_ALLOW_METHODS = [
     "DELETE",
