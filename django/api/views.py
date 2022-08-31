@@ -1,8 +1,9 @@
 from rest_framework import viewsets
-from rest_framework.generics import ListAPIView
+from rest_framework import permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.db.models import Q, Count
+from django.contrib.auth.models import User
 from vacancies.models import *
 from .serializers import *
 from .utils import NestedObjectManager, clean_nested_queryset, validate_get_params
@@ -16,6 +17,15 @@ class VacanciesPagination(PageNumberPagination):
         response.data['page_count'] = self.page.paginator.num_pages
         return response
 
+class ParserWritePermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        parser = User.objects.filter(username="parser").first()
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        else:
+            return request.user == parser
+
+
 class TechnologyPagination(PageNumberPagination):
     page_size = 10
     def get_paginated_response(self, data):
@@ -28,7 +38,8 @@ class TechnologyPagination(PageNumberPagination):
 class VacanciesViewSet(viewsets.ModelViewSet):
     serializer_class = VacancySerializer
     pagination_class = VacanciesPagination
-    
+    permission_classes = [ParserWritePermission,]
+
     def list(self, request, *args, **kwargs):
         import re
         search_query=request.query_params.dict().get('search', None)
@@ -112,45 +123,12 @@ class VacanciesViewSet(viewsets.ModelViewSet):
         serializer = VacancySerializer(new_vacancy)
         return Response(serializer.data, status=201)
 
-# Заменён аналогичными методами в VacancyViewSet
-"""class VacancyGlobalFieldSearch(viewsets.ReadOnlyModelViewSet):
-    serializer_class = VacancySerializer
-    pagination_class = VacanciesPagination
-
-    def list(self, request, *args, **kwargs):
-        import re
-        search_query=request.query_params.dict().get('search', None)
-        response =  super().list(request, *args, **kwargs)
-        if search_query:
-            for vacancy in response.data['results']:
-                found_in = []
-                for key, value in vacancy.items():
-                    if re.search(str(search_query), str(value), re.IGNORECASE):
-                        found_in.append(key)
-                vacancy['found_in'] = found_in
-        return response
-
-    def get_queryset(self):
-        field_filter_mapping = {"desc": "__icontains",
-                                "tasks": "__icontains",
-                                "requirements": "__icontains",
-                                "role": "__name__icontains",
-                                "location": "__name__icontains",} 
-        search_query = self.request.query_params.dict().get('search', None)
-        if search_query:
-            query = Q(technologies__name__in=[search_query])
-            for field, filter in field_filter_mapping.items():
-                concat_filter = {f"{field}{filter}": search_query}
-                query.add(Q(**concat_filter), Q.OR)
-            queryset = Vacancy.objects.filter(query).distinct() 
-        else:
-            queryset = Vacancy.objects.all()
-        return queryset"""
 
 class TechnologyViewSet(viewsets.ModelViewSet):
     serializer_class = TechnologySerializer
     pagination_class = TechnologyPagination
-    
+    permission_classes = [ParserWritePermission,]
+
     def get_queryset(self):
         queryset = Technology.objects.annotate(frequency=Count('technologies_required')).order_by('-frequency')
         return queryset
@@ -158,6 +136,7 @@ class TechnologyViewSet(viewsets.ModelViewSet):
 
 class ChannelViewSet(viewsets.ModelViewSet):
     serializer_class = ChannelSerializer
+    permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
         queryset = Channel.objects.all()
@@ -165,6 +144,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
 class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
+    permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
         queryset = Role.objects.all()
@@ -172,6 +152,7 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 class LocationViewSet(viewsets.ModelViewSet):
     serializer_class = LocationSerializer
+    permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
         queryset = Location.objects.all()

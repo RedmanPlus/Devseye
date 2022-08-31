@@ -1,5 +1,6 @@
 import os
 import re
+from requests import Session
 from dotenv import load_dotenv
 from telethon.sync import TelegramClient
 import parser_utils
@@ -11,6 +12,16 @@ channels_for_parse = [ch.replace('\n', '') for ch in open('channels.txt', 'r', e
 # на любой другой, чтобы не нарушалась уникальность сессий клиента. 
 # Если не поменять - упадёт и локально, и удаленно запущенный
 client = TelegramClient('parse_session', os.getenv('TELEGRAM_API_ID'), os.getenv('TELEGRAM_API_HASH'))
+
+def get_parser_session():
+    session = Session()
+    response = session.post(f"http://django:{os.getenv('DJANGO_PORT')}/api/api-token-auth", 
+                      data={"username": f"{os.getenv('PARSER_USERNAME')}", 
+                            "password": f"{os.getenv('PARSER_PASSWORD')}"})
+    token = response.json()['token']
+    session.headers.update({"Authorization": f"Token {token}"})
+    return session
+
 
 def parse_vacancy(msg):
     technologies_list = [tech.replace('\n', '') for tech in 
@@ -48,3 +59,5 @@ def parse_all_vacancies(tg_client, channel):
             if vacancy:
                 vacancies.append(vacancy)
     return vacancies
+
+session = get_parser_session()

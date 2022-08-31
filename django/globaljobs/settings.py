@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-fn%fj7336xm_4()z#jym%b0yhdw0(frww#p%ob=25*bvnc^w7a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 # в Docker network контейнеры связываются друг с другом по названиям вместо IP
-ALLOWED_HOSTS = ['devseye.ru', '185.104.113.54','127.0.0.1', 'localhost', 'django', 'parser'] 
+ALLOWED_HOSTS = ['devseye.ru', '185.104.113.54', '127.0.0.1', 'localhost', 'django', 'parser'] 
 
 # Application definition
 
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'psycopg2',
     'rest_framework',
+    'rest_framework.authtoken',
     'djmoney',
     'corsheaders',
     'vacancies.apps.VacanciesConfig',
@@ -144,6 +145,11 @@ STATICFILES_DIRS = [
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.TokenAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+}
 
 CORS_ALLOW_ALL_ORIGINS = True
 

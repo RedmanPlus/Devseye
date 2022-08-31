@@ -1,6 +1,5 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from django.db.models import Model
-from django.db.models import Q
 from rest_framework.exceptions import ValidationError, ParseError
 from vacancies.models import *
 
