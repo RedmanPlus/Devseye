@@ -27,8 +27,8 @@ def parse_vacancy(msg):
     technologies_list = [tech.replace('\n', '') for tech in 
                     open('technologies.txt', 'r', encoding='utf-8') if len(tech)> 3]
     try:
-        if ('#вакансия' in msg.text) and (not any([(tag in msg.text) for tag in 
-                                                 ('#статья', '#задача', '#задачаотподписчика')])):
+        if (any([(tag in msg.text) for tag in ('#вакансия', '#офис', '#удаленка', '#гибрид')])) and (not any([(tag in msg.text) for tag in 
+                                              ('#статья', '#задача', '#задачаотподписчика')])):
             text = re.sub('[*\[\]]', '', msg.text) # Markdown -> Plain Text
             text = re.sub('\(http[s]?.*\)', '', text) # Убираем гиперссылки                                
             vac_arr = text.split('\n')
