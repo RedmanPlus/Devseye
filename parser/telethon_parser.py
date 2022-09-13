@@ -25,7 +25,7 @@ def get_parser_session():
 
 def parse_vacancy(msg):
     technologies_list = [tech.replace('\n', '') for tech in 
-                    open('technologies.txt', 'r', encoding='utf-8') if len(tech)> 3]
+                    open('technologies.txt', 'r', encoding='utf-8') if len(tech)> 2] #технологии меньше 2 букв конфликтуют с обычными союзами и словами
     try:
         if (any([(tag in msg.text) for tag in ('#вакансия', '#офис', '#удаленка', '#гибрид')])) and (not any([(tag in msg.text) for tag in 
                                               ('#статья', '#задача', '#задачаотподписчика')])):
