@@ -9,7 +9,7 @@ from .serializers import *
 from .utils import NestedObjectManager, clean_nested_queryset, validate_get_params
 
 
-class VacanciesPagination(PageNumberPagination):
+class DefaultPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'limit'
     def get_paginated_response(self, data):
@@ -26,24 +26,15 @@ class ParserWritePermission(permissions.BasePermission):
             return request.user == parser
 
 
-class TechnologyPagination(PageNumberPagination):
-    page_size = 10
-    def get_paginated_response(self, data):
-        response = super().get_paginated_response(data)
-        response.data['page_count'] = self.page.paginator.num_pages
-        return response
-    
-
-
 class VacanciesViewSet(viewsets.ModelViewSet):
     serializer_class = VacancySerializer
-    pagination_class = VacanciesPagination
+    pagination_class = DefaultPagination
     permission_classes = [ParserWritePermission,]
 
     def list(self, request, *args, **kwargs):
         import re
-        search_query=request.query_params.dict().get('search', None)
-        response =  super().list(request, *args, **kwargs)
+        search_query = request.query_params.dict().get('search', None)
+        response = super().list(request, *args, **kwargs)
         if search_query:
             for vacancy in response.data['results']:
                 found_in = []
@@ -130,7 +121,7 @@ class VacanciesViewSet(viewsets.ModelViewSet):
 
 class TechnologyViewSet(viewsets.ModelViewSet):
     serializer_class = TechnologySerializer
-    pagination_class = TechnologyPagination
+    pagination_class = DefaultPagination
     permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
@@ -149,9 +140,16 @@ class ChannelViewSet(viewsets.ModelViewSet):
 class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
     permission_classes = [ParserWritePermission,]
+    pagination_class = DefaultPagination
 
     def get_queryset(self):
         params = self.request.query_params.dict()
+        if params:
+            # Параметры пагинации не участвуют в фильтрах по вакансиям
+            pagination_params = ('page', 'page_count', 'limit')
+            for key in pagination_params:
+                if key in params:
+                    params.pop(key)
         special_param_keys = ('group',)
         special_params = {key: params.pop(key) for key in special_param_keys if key in params}
         queryset = clean_nested_queryset(params, special_params, {"group": "group__name__iexact"}, Role).annotate(frequency=Count('vacancy')).order_by('-frequency') 
