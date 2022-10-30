@@ -151,11 +151,10 @@ class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
-        queryset = Role.objects.annotate(frequency=Count('vacancy')).order_by('-frequency') 
         params = self.request.query_params.dict()
         special_param_keys = ('group',)
         special_params = {key: params.pop(key) for key in special_param_keys if key in params}
-        queryset = clean_nested_queryset(params, special_params, {"group": "group__name__iexact"}, Role)
+        queryset = clean_nested_queryset(params, special_params, {"group": "group__name__iexact"}, Role).annotate(frequency=Count('vacancy')).order_by('-frequency') 
         return queryset
 
 class LocationViewSet(viewsets.ModelViewSet):
