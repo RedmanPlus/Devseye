@@ -109,6 +109,10 @@ class VacanciesViewSet(viewsets.ModelViewSet):
         nested_manager = NestedObjectManager()
         data['role'] = nested_manager.get_object_or_create_new(Role, **data['role'])
         data['channel_id'] = nested_manager.get_object_or_raise_400(Channel, **data['channel_id'])
+        nocode_channel = Channel.objects.get_or_create(url='itjobs_nocode')[0]
+        if data['channel_id'] == nocode_channel:
+            data['role'].group = RoleGroup.objects.get_or_create(name='NoCode')[0]
+            data['role'].save()
         if 'location' in data:
             data['location'] = nested_manager.get_object_or_create_new(Location, **data['location'])
 
@@ -147,7 +151,11 @@ class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [ParserWritePermission,]
 
     def get_queryset(self):
-        queryset = Role.objects.all()
+        queryset = Role.objects.annotate(frequency=Count('vacancy')).order_by('-frequency') 
+        params = self.request.query_params.dict()
+        special_param_keys = ('group',)
+        special_params = {key: params.pop(key) for key in special_param_keys if key in params}
+        queryset = clean_nested_queryset(params, special_params, {"group": "group__name__iexact"}, Role)
         return queryset
 
 class LocationViewSet(viewsets.ModelViewSet):
